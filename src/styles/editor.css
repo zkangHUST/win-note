@@ -1,0 +1,29 @@
+/* PrimeVue Editor (基于Quill) 高度分析 */
+
+/* 整个Editor容器 */
+.p-editor {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 防止整个编辑器溢出 */
+}
+
+/* 工具栏区域 */
+.p-editor-toolbar {
+  height: 42px; /* 默认工具栏高度 */
+  min-height: 42px;
+  border-bottom: 1px solid var(--border-primary);
+  background-color: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+/* 内容区域 */
+.p-editor-content {
+  flex: 1;
+  height: calc(100% - 100px); /* 总高度减去工具栏高度 */
+  display: flex;
+  flex-direction: column;
+}
