@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { ref } from "vue";
+// import { ref } from "vue";
 import FolderList from "./FolderList.vue";
 import TagList from "./TagList.vue";
 import { useFolders } from "@/composables/useFolders";
 import { useTags } from "@/composables/useTags";
 
-const props = defineProps<{
-  visible: boolean;
-}>();
+// const props = defineProps<{
+//   visible: boolean;
+// }>();
 
 const emit = defineEmits<{
   (e: "update:visible", value: boolean): void;
@@ -27,11 +27,18 @@ function onSelectTag(id: string) {
 
 <template>
     <div class="sidebar">
-        <h3 class="sidebar-title">Win Note</h3>
-        <div>on my PC</div>
+        <div class="sidebar-header">
+            <h3 class="app-title">Win Note</h3>
+        </div>
+        
+        <!-- <div class="divider"></div> -->
+
         <div class="folders">
             <FolderList :items="folders" :active-id="activeFolderId" @select="onSelectFolder" />
         </div>
+        
+        <div class="divider"></div>
+        
         <div class="tags">
             <TagList :items="tags" :active-id="activeTagId" @select="onSelectTag" />
         </div>
@@ -42,32 +49,42 @@ function onSelectTag(id: string) {
 .sidebar {
     width: var(--sidebar-width);
     height: 100%;
-    background-color: var(--bg-sidebar);
+    background-color: #fafafa;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: var(--spacing-md);
-    border-right: 1px solid var(--border-primary);
+    border-right: 1px solid #e5e5e5;
 }
 
-.sidebar-title {
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-bold);
-    margin-bottom: var(--spacing-md);
-    color: var(--text-primary);
+.sidebar-header {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid #e5e5e5;
+    background-color: #ffffff;
+}
+
+.app-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: #1a1a1a;
+    letter-spacing: -0.01em;
 }
 
 .folders {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
-    margin-bottom: var(--spacing-md);
-    color: var(--text-secondary);
-    width: 100%;
+    flex: 1;
+    padding: 16px 20px;
+    overflow-y: auto;
+}
+
+.divider {
+    height: 1px;
+    background-color: #e5e5e5;
+    margin: 16px 20px;
+    flex-shrink: 0;
 }
 
 .tags {
-    margin-top: var(--spacing-lg);
-    width: 100%;
+    flex: 1;
+    padding: 16px 20px;
+    overflow-y: auto;
 }
 </style>

@@ -2,7 +2,7 @@
 import TagItem from "./TagItem.vue";
 import type { Tag, SelectEvent } from "@/types";
 
-const props = defineProps<{
+defineProps<{
   items: Tag[];
   activeId?: string;
 }>();
@@ -32,7 +32,7 @@ function onClick(id: string) {
 .tag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
 }
 </style>
 

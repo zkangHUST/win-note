@@ -18,6 +18,8 @@ function onSelectNote(id: string) {
 </script>
 
 <template>
+                    <!-- <Editor v-model="editorContent" editorStyle="height: 400px" /> -->
+
   <ErrorBoundary>
     <main class="container">
       <div class="layout">
@@ -30,7 +32,7 @@ function onSelectNote(id: string) {
               </SplitterPanel>
               <SplitterPanel :size="70" :minSize="30">
                 <div class="editor-container">
-                  <Editor v-model="editorContent" editorStyle="height: 100%" />
+                  <Editor v-model="editorContent" editorStyle="height: 600px" />
                 </div>
               </SplitterPanel>
             </Splitter>
@@ -66,10 +68,10 @@ function onSelectNote(id: string) {
   height: 100%;
 }
 .editor-container {
-  height: 50vh;
-  border: 5px solid red;
-  background-color: aqua;
-  padding: 20px;
+  height: 100%;
+  /* border: 5px solid red; */
+  /* background-color: aqua; */
+  /* padding: 20px; */
 }
 </style>
 
