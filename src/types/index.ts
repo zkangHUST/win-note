@@ -6,13 +6,15 @@ export interface BaseEntity {
 }
 
 // 笔记相关类型
-export interface Note extends BaseEntity {
+export interface Note {
+  id: string;
   title: string;
   snippet?: string;
   updatedAt?: string;
   tags?: string[];
   content?: string;
   folderId?: string;
+  icon?: string;
 }
 
 // 文件夹相关类型

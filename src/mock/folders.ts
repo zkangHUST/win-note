@@ -1,6 +1,7 @@
 import type { FolderNode } from "@/types";
 
 export const mockFolders: FolderNode[] = [
+  { id: "all", label: "全部", icon: "pi pi-th-large" },
   { id: "inbox", label: "收件箱", icon: "pi pi-inbox" },
   {
     id: "notes",

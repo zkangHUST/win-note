@@ -1,6 +1,7 @@
 import { ref, computed } from "vue";
 import type { Tag } from "@/types";
 import { mockTags } from "@/mock/tags";
+import { generateTagId } from "@/utils/idGenerator";
 
 export function useTags() {
   const tags = ref<Tag[]>(mockTags);
@@ -17,7 +18,7 @@ export function useTags() {
   function createTag(tag: Omit<Tag, "id">) {
     const newTag: Tag = {
       ...tag,
-      id: `tag_${Date.now()}`,
+      id: generateTagId(),
     };
     tags.value.push(newTag);
     return newTag;

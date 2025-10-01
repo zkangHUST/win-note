@@ -45,6 +45,8 @@ const isDense = computed(() => !!props.dense);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+  height: 100%;
+  overflow-y: auto;
 }
 
 .note-item {
@@ -53,6 +55,9 @@ const isDense = computed(() => !!props.dense);
   cursor: pointer;
   transition: all var(--transition-fast);
   border: 1px solid transparent;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
 }
 
 .note-item:hover {
@@ -70,6 +75,7 @@ const isDense = computed(() => !!props.dense);
   align-items: center;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-xs);
+  flex-shrink: 0;
 }
 
 .title {
@@ -96,6 +102,8 @@ const isDense = computed(() => !!props.dense);
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: var(--line-height-normal);
+  flex: 1;
+  min-height: 20px;
 }
 
 .meta {
@@ -103,6 +111,7 @@ const isDense = computed(() => !!props.dense);
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
+  flex-shrink: 0;
 }
 
 .tag {
@@ -116,6 +125,7 @@ const isDense = computed(() => !!props.dense);
 
 .note-list.dense .note-item {
   padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 100px;
 }
 
 .note-list.dense .title {

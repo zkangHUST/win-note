@@ -3,24 +3,27 @@ import { ref } from "vue";
 import FolderList from "./FolderList.vue";
 import TagList from "./TagList.vue";
 import NewFolderDialog from "./NewFolderDialog.vue";
-import { useFolders } from "@/composables/useFolders";
 import { useTags } from "@/composables/useTags";
+import type { FolderNode } from "@/types";
 
-// const props = defineProps<{
-//   visible: boolean;
-// }>();
+const props = defineProps<{
+  visible: boolean;
+  folders: FolderNode[];
+  activeFolderId: string;
+}>();
 
 const emit = defineEmits<{
   (e: "update:visible", value: boolean): void;
+  (e: "select-folder", id: string): void;
+  (e: "create-folder", data: { name: string; icon: string }): void;
 }>();
 
-const { folders, activeFolderId, selectFolder } = useFolders();
 const { tags, activeTagId, selectTag } = useTags();
 
 const showNewFolderDialog = ref(false);
 
 function onSelectFolder(id: string) {
-  selectFolder(id);
+  emit("select-folder", id);
 }
 
 function onSelectTag(id: string) {
@@ -28,12 +31,15 @@ function onSelectTag(id: string) {
 }
 
 function createNewFolder() {
+  console.log("🔄 打开新建文件夹对话框");
   showNewFolderDialog.value = true;
 }
 
 function handleCreateFolder(data: { name: string; icon: string }) {
   console.log("创建文件夹:", data);
-  // TODO: 实现实际的创建文件夹逻辑
+  
+  // 通过 emit 事件传递给父组件处理
+  emit("create-folder", data);
   showNewFolderDialog.value = false;
 }
 </script>
@@ -46,9 +52,9 @@ function handleCreateFolder(data: { name: string; icon: string }) {
         
         <!-- <div class="divider"></div> -->
 
-        <div class="folders">
-            <FolderList :items="folders" :active-id="activeFolderId" @select="onSelectFolder" />
-        </div>
+              <div class="folders">
+                <FolderList :items="props.folders" :active-id="props.activeFolderId" @select="onSelectFolder" />
+              </div>
         
         <div class="divider"></div>
         
