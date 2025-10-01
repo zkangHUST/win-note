@@ -3,6 +3,9 @@ import { ref } from "vue";
 import FolderList from "./FolderList.vue";
 import TagList from "./TagList.vue";
 import NewFolderDialog from "./NewFolderDialog.vue";
+import EditFolderDialog from "./EditFolderDialog.vue";
+import ConfirmDialog from "primevue/confirmdialog";
+import { useConfirm } from "primevue/useconfirm";
 import { useTags } from "@/composables/useTags";
 import type { FolderNode } from "@/types";
 
@@ -15,12 +18,17 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "update:visible", value: boolean): void;
   (e: "select-folder", id: string): void;
-  (e: "create-folder", data: { name: string; icon: string }): void;
+  (e: "create-folder", data: { name: string; icon: string; parentId: string | null }): void;
+  (e: "edit-folder", data: { id: string; name: string; icon: string }): void;
+  (e: "delete-folder", id: string): void;
 }>();
 
 const { tags, activeTagId, selectTag } = useTags();
+const confirm = useConfirm();
 
 const showNewFolderDialog = ref(false);
+const showEditFolderDialog = ref(false);
+const folderToEdit = ref<FolderNode | null>(null);
 
 function onSelectFolder(id: string) {
   emit("select-folder", id);
@@ -31,16 +39,78 @@ function onSelectTag(id: string) {
 }
 
 function createNewFolder() {
-  console.log("🔄 打开新建文件夹对话框");
+  console.log("🔄 Open new folder dialog");
   showNewFolderDialog.value = true;
 }
 
-function handleCreateFolder(data: { name: string; icon: string }) {
-  console.log("创建文件夹:", data);
+function handleCreateFolder(data: { name: string; icon: string; parentId: string | null }) {
+  console.log("Create folder:", data);
   
-  // 通过 emit 事件传递给父组件处理
+  // Pass event to parent component for processing
   emit("create-folder", data);
   showNewFolderDialog.value = false;
+}
+
+function onEditFolder(id: string) {
+  const folder = findFolderById(props.folders, id);
+  if (folder) {
+    folderToEdit.value = folder;
+    showEditFolderDialog.value = true;
+  }
+}
+
+function onDeleteFolder(id: string) {
+  console.log("🗑️ Sidebar: Delete folder function called:", id);
+  
+  // Find the folder and check if it's a system folder
+  const folder = findFolderById(props.folders, id);
+  if (folder?.isSystem) {
+    console.warn("⚠️ System folders cannot be deleted:", id);
+    alert("System folders cannot be deleted");
+    return;
+  }
+  
+  const folderName = folder?.label || 'Unknown Folder';
+  
+  console.log("🗑️ Show confirmation dialog");
+  confirm.require({
+    message: `Are you sure you want to delete folder "${folderName}"?`,
+    header: 'Confirm Delete',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Delete',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    acceptClass: 'p-button-danger',
+    accept: () => {
+      console.log("🗑️ User confirmed deletion, sending event");
+      emit("delete-folder", id);
+    },
+    reject: () => {
+      console.log("🗑️ User cancelled deletion");
+    }
+  });
+}
+
+function handleEditFolder(data: { id: string; name: string; icon: string }) {
+  console.log("Edit folder:", data);
+  
+  // Pass event to parent component for processing
+  emit("edit-folder", data);
+  showEditFolderDialog.value = false;
+  folderToEdit.value = null;
+}
+
+function findFolderById(folderList: FolderNode[], id: string): FolderNode | undefined {
+  for (const folder of folderList) {
+    if (folder.id === id) {
+      return folder;
+    }
+    if (folder.children) {
+      const found = findFolderById(folder.children, id);
+      if (found) return found;
+    }
+  }
+  return undefined;
 }
 </script>
 
@@ -53,7 +123,13 @@ function handleCreateFolder(data: { name: string; icon: string }) {
         <!-- <div class="divider"></div> -->
 
               <div class="folders">
-                <FolderList :items="props.folders" :active-id="props.activeFolderId" @select="onSelectFolder" />
+                <FolderList 
+                  :items="props.folders" 
+                  :active-id="props.activeFolderId" 
+                  @select="onSelectFolder"
+                  @edit="onEditFolder"
+                  @delete="onDeleteFolder"
+                />
               </div>
         
         <div class="divider"></div>
@@ -72,8 +148,17 @@ function handleCreateFolder(data: { name: string; icon: string }) {
     
     <NewFolderDialog
         v-model:visible="showNewFolderDialog"
+        :folders="props.folders"
         @create="handleCreateFolder"
     />
+    
+    <EditFolderDialog
+        v-model:visible="showEditFolderDialog"
+        :folder="folderToEdit"
+        @save="handleEditFolder"
+    />
+    
+    <ConfirmDialog />
 </template>
 
 <style scoped>

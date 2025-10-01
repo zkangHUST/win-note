@@ -4,6 +4,7 @@ import App from "./App.vue";
 // PrimeVue setup
 import PrimeVue from "primevue/config";
 import Aura from "@primeuix/themes/aura";
+import ConfirmationService from "primevue/confirmationservice";
 
 // 样式导入
 import "primeicons/primeicons.css";
@@ -13,4 +14,5 @@ import "@/styles/editor.css";
 
 const app = createApp(App);
 app.use(PrimeVue, { theme: { preset: Aura } });
+app.use(ConfirmationService);
 app.mount("#app");

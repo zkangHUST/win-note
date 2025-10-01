@@ -5,7 +5,7 @@ import type { FolderNode } from "@/types";
  * 用于应用首次启动时的初始化
  */
 export const DEFAULT_FOLDERS: FolderNode[] = [
-  { id: "all", label: "全部", icon: "pi pi-th-large" },
+  { id: "all", label: "全部", icon: "pi pi-th-large", isSystem: true },
   { id: "inbox", label: "收件箱", icon: "pi pi-inbox" },
   {
     id: "notes",
@@ -16,7 +16,7 @@ export const DEFAULT_FOLDERS: FolderNode[] = [
       { id: "ideas", label: "想法" },
     ],
   },
-  { id: "archive", label: "归档", icon: "pi pi-inbox" },
+  { id: "archive", label: "归档", icon: "pi pi-inbox", isSystem: true },
   { id: "work", label: "工作", icon: "pi pi-briefcase" },
   {
     id: "projects",
@@ -39,8 +39,8 @@ export const DEFAULT_FOLDERS: FolderNode[] = [
       { id: "notes", label: "笔记" },
     ],
   },
-  { id: "favorites", label: "收藏", icon: "pi pi-star" },
-  { id: "trash", label: "回收站", icon: "pi pi-trash" },
+  { id: "favorites", label: "收藏", icon: "pi pi-star", isSystem: true },
+  { id: "trash", label: "回收站", icon: "pi pi-trash", isSystem: true },
 ];
 
 /**

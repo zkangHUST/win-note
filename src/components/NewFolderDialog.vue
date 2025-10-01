@@ -1,30 +1,57 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import Button from "primevue/button";
 import FloatLabel from "primevue/floatlabel";
+import Select from "primevue/select";
 import { ICON_OPTIONS } from "@/constants/icons";
+import type { FolderNode } from "@/types";
 
 const props = defineProps<{
   visible: boolean;
+  folders: FolderNode[];
 }>();
 
 const emit = defineEmits<{
   (e: "update:visible", value: boolean): void;
-  (e: "create", data: { name: string; icon: string }): void;
+  (e: "create", data: { name: string; icon: string; parentId: string | null }): void;
 }>();
 
 const folderName = ref("");
 const selectedIcon = ref("pi pi-folder");
+const selectedParentId = ref<string | null>(null);
 
 const iconOptions = ICON_OPTIONS;
+
+// 创建父文件夹选项列表
+const parentFolderOptions = computed(() => {
+  const options: { label: string; value: string | null }[] = [
+    { label: "Root", value: null }
+  ];
+  
+  const addFolder = (folder: FolderNode, level: number = 0) => {
+    const indent = "  ".repeat(level);
+    options.push({
+      label: `${indent}${folder.label}`,
+      value: folder.id
+    });
+    
+    if (folder.children) {
+      folder.children.forEach(child => addFolder(child, level + 1));
+    }
+  };
+  
+  props.folders.forEach(folder => addFolder(folder));
+  return options;
+});
 
 function handleCreate() {
   if (folderName.value.trim()) {
     emit("create", {
       name: folderName.value.trim(),
       icon: selectedIcon.value,
+      parentId: selectedParentId.value,
     });
     handleCancel();
   }
@@ -33,6 +60,7 @@ function handleCreate() {
 function handleCancel() {
   folderName.value = "";
   selectedIcon.value = "pi pi-folder";
+  selectedParentId.value = null;
   emit("update:visible", false);
 }
 </script>
@@ -42,7 +70,7 @@ function handleCancel() {
     v-model:visible="props.visible"
     modal
     header="New Folder"
-    :style="{ width: '400px' }"
+    :style="{ width: '500px' }"
     @update:visible="emit('update:visible', $event)"
   >
     <div class="dialog-content">
@@ -56,6 +84,17 @@ function handleCancel() {
           />
           <label for="folder-name">Folder Name</label>
         </FloatLabel>
+      </div>
+      
+      <div class="form-group">
+        <Select
+          v-model="selectedParentId"
+          :options="parentFolderOptions"
+          option-label="label"
+          option-value="value"
+          placeholder="Select parent folder"
+          class="form-select"
+        />
       </div>
       
       <div class="form-group">
@@ -110,7 +149,7 @@ function handleCancel() {
 }
 
 
-.form-dropdown {
+.form-select {
   width: 100%;
 }
 

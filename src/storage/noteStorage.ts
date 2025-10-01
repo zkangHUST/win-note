@@ -11,6 +11,7 @@ export interface NoteMetadata {
   tags?: string[];
   folderId?: string;
   icon?: string;
+  isStarred?: boolean;
 }
 
 export class NoteStorageManager {

@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from "vue";
 import AppSidebar from "./components/Sidebar.vue";
 import NoteList from "./components/NoteList.vue";
 import ErrorBoundary from "./components/ErrorBoundary.vue";
+import MoveToFolderDialog from "./components/MoveToFolderDialog.vue";
 import Editor from "primevue/editor";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
@@ -11,8 +12,12 @@ import { useFolders } from "@/composables/useFolders";
 import { initializeStorage } from "@/storage";
 
 const sidebarVisible = ref(true);
-const { folders, activeFolderId, selectFolder, initializeFolders, createFolder } = useFolders();
-const { notes, activeNoteId, editorContent, selectNote, createNote, moveNoteToFolder, initializeNotes, updateNoteContent } = useNotes(activeFolderId);
+const { folders, activeFolderId, selectFolder, initializeFolders, createFolder, editFolder, deleteFolder } = useFolders();
+const { notes, activeNoteId, editorContent, selectNote, createNote, moveNoteToFolder, toggleStar, initializeNotes, updateNoteContent } = useNotes(activeFolderId);
+
+// 移动笔记对话框状态
+const showMoveDialog = ref(false);
+const noteToMove = ref<{ id: string; title: string } | null>(null);
 
 // 监听文件夹切换
 function onSelectFolder(id: string) {
@@ -26,12 +31,84 @@ function onSelectNote(id: string) {
   selectNote(id);
 }
 
-function onCreateFolder(data: { name: string; icon: string }) {
+// 处理移动笔记到文件夹
+function onMoveToFolder(noteId: string) {
+  const note = notes.value.find(n => n.id === noteId);
+  if (note) {
+    noteToMove.value = { id: note.id, title: note.title };
+    showMoveDialog.value = true;
+  }
+}
+
+// 处理删除笔记
+async function onDeleteNote(noteId: string) {
+  console.log("🗑️ 删除笔记:", noteId);
+  
+  try {
+    // 将笔记移动到回收站文件夹
+    const movedNote = await moveNoteToFolder(noteId, "trash");
+    
+    if (movedNote) {
+      console.log("✅ 笔记已移动到回收站:", movedNote.title);
+      
+      // 如果当前在回收站文件夹，保持选中状态
+      // 否则切换到其他笔记
+      if (activeFolderId.value !== "trash") {
+        const remainingNotes = notes.value.filter(n => n.id !== noteId && n.folderId !== 'trash');
+        if (remainingNotes.length > 0) {
+          await selectNote(remainingNotes[0].id);
+        } else {
+          activeNoteId.value = "";
+          editorContent.value = "";
+        }
+      }
+    } else {
+      console.error("❌ 移动笔记到回收站失败");
+      alert("删除失败，请重试");
+    }
+  } catch (error) {
+    console.error("❌ 移动笔记到回收站失败:", error);
+    alert("删除失败: " + (error instanceof Error ? error.message : String(error)));
+  }
+}
+
+// 处理切换收藏状态
+async function onToggleStar(noteId: string) {
+  console.log("⭐ 切换收藏状态:", noteId);
+  
+  try {
+    const updatedNote = await toggleStar(noteId);
+    if (updatedNote) {
+      console.log("✅ 收藏状态已更新:", updatedNote.title, updatedNote.isStarred ? "已收藏" : "未收藏");
+    }
+  } catch (error) {
+    console.error("❌ 切换收藏状态失败:", error);
+    alert("操作失败: " + (error instanceof Error ? error.message : String(error)));
+  }
+}
+
+// 执行移动操作
+async function handleMoveNote(folderId: string) {
+  if (!noteToMove.value) return;
+  
+  try {
+    console.log("📝 移动笔记:", noteToMove.value.title, "到文件夹:", folderId);
+    await moveNoteToFolder(noteToMove.value.id, folderId);
+    console.log("✅ 笔记移动成功");
+  } catch (error) {
+    console.error("❌ 移动笔记失败:", error);
+  } finally {
+    showMoveDialog.value = false;
+    noteToMove.value = null;
+  }
+}
+
+function onCreateFolder(data: { name: string; icon: string; parentId: string | null }) {
   console.log("App: 处理创建文件夹事件:", data);
   
   try {
-    // 创建新文件夹（作为顶级文件夹）
-    const newFolder = createFolder(null, {
+    // 创建新文件夹
+    const newFolder = createFolder(data.parentId, {
       label: data.name,
       icon: data.icon,
     });
@@ -39,6 +116,36 @@ function onCreateFolder(data: { name: string; icon: string }) {
     console.log("✅ App: 文件夹创建成功:", newFolder);
   } catch (error) {
     console.error("❌ App: 创建文件夹失败:", error);
+  }
+}
+
+function onEditFolder(data: { id: string; name: string; icon: string }) {
+  console.log("App: 处理编辑文件夹事件:", data);
+  
+  try {
+    const updatedFolder = editFolder(data.id, {
+      label: data.name,
+      icon: data.icon,
+    });
+    
+    if (updatedFolder) {
+      console.log("✅ App: 文件夹编辑成功:", updatedFolder);
+    } else {
+      console.error("❌ App: 文件夹编辑失败: 未找到文件夹");
+    }
+  } catch (error) {
+    console.error("❌ App: 编辑文件夹失败:", error);
+  }
+}
+
+function onDeleteFolder(id: string) {
+  console.log("App: 处理删除文件夹事件:", id);
+  
+  try {
+    deleteFolder(id);
+    console.log("✅ App: 文件夹删除成功:", id);
+  } catch (error) {
+    console.error("❌ App: 删除文件夹失败:", error);
   }
 }
 
@@ -63,48 +170,6 @@ async function onCreateNote() {
   }
 }
 
-// 删除笔记（移动到回收站）
-async function onDeleteNote() {
-  console.log("🔍 删除按钮被点击");
-  console.log("🔍 当前选中的笔记ID:", activeNoteId.value);
-  console.log("🔍 当前笔记列表:", notes.value.map(n => ({ id: n.id, title: n.title })));
-  
-  if (!activeNoteId.value) {
-    console.warn("⚠️ 没有选中的笔记可删除");
-    alert("请先选择一个笔记");
-    return;
-  }
-  
-  try {
-    console.log("🗑️ 移动笔记到回收站:", activeNoteId.value);
-    
-    // 将笔记移动到回收站文件夹
-    const movedNote = await moveNoteToFolder(activeNoteId.value, "trash");
-    
-    if (movedNote) {
-      console.log("✅ 笔记已移动到回收站:", movedNote.title);
-      
-      // 如果当前在回收站文件夹，保持选中状态
-      // 否则切换到其他笔记
-      if (activeFolderId.value !== "trash") {
-        const remainingNotes = notes.value.filter(n => n.id !== activeNoteId.value && n.folderId !== 'trash');
-        console.log("🔍 剩余笔记:", remainingNotes.map(n => ({ id: n.id, title: n.title })));
-        if (remainingNotes.length > 0) {
-          await selectNote(remainingNotes[0].id);
-        } else {
-          activeNoteId.value = "";
-          editorContent.value = "";
-        }
-      }
-    } else {
-      console.error("❌ 移动笔记到回收站失败");
-      alert("删除失败，请重试");
-    }
-  } catch (error) {
-    console.error("❌ 移动笔记到回收站失败:", error);
-    alert("删除失败: " + (error instanceof Error ? error.message : String(error)));
-  }
-}
 
 
 
@@ -138,6 +203,8 @@ onMounted(async () => {
           :active-folder-id="activeFolderId"
           @select-folder="onSelectFolder"
           @create-folder="onCreateFolder"
+          @edit-folder="onEditFolder"
+          @delete-folder="onDeleteFolder"
         />
         <div class="content">
           <div class="note-area">
@@ -147,7 +214,7 @@ onMounted(async () => {
                   <div class="notes-header">
                     <h3 class="notes-title">笔记</h3>
                     <div class="notes-actions">
-                      <button @click="onDeleteNote" class="delete-note-btn" title="删除笔记" :disabled="!activeNoteId">
+                      <button @click="() => onDeleteNote(activeNoteId)" class="delete-note-btn" title="删除笔记" :disabled="!activeNoteId">
                         <i class="pi pi-trash"></i>
                       </button>
                       <!-- 调试信息 -->
@@ -159,7 +226,15 @@ onMounted(async () => {
                       </button>
                     </div>
                   </div>
-                  <NoteList :items="notes" :active-id="activeNoteId" dense @select="onSelectNote" />
+                  <NoteList 
+                    :items="notes" 
+                    :active-id="activeNoteId" 
+                    dense 
+                    @select="onSelectNote"
+                    @move-to-folder="onMoveToFolder"
+                    @delete="onDeleteNote"
+                    @toggle-star="onToggleStar"
+                  />
                 </div>
               </SplitterPanel>
               <SplitterPanel :size="70" :minSize="30">
@@ -172,6 +247,15 @@ onMounted(async () => {
         </div>
       </div>
     </main>
+    
+    <!-- 移动笔记对话框 -->
+    <MoveToFolderDialog
+      v-model:visible="showMoveDialog"
+      :folders="folders"
+      :current-folder-id="activeFolderId"
+      :note-title="noteToMove?.title || ''"
+      @move="handleMoveNote"
+    />
   </ErrorBoundary>
 </template>
 
@@ -190,7 +274,7 @@ onMounted(async () => {
 
 .content {
   flex: 1;
-  padding: var(--spacing-md);
+  /* padding: var(--spacing-md); */
   overflow: auto;
   background-color: var(--bg-primary);
 }
@@ -210,6 +294,7 @@ onMounted(async () => {
   flex-direction: column;
   background-color: var(--surface-card);
   border-radius: var(--border-radius);
+  /* padding-right: var(--spacing-sm); */
   overflow: hidden;
 }
 

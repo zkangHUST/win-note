@@ -8,6 +8,7 @@ export const mockNotes: Note[] = [
     updatedAt: "2025-09-30",
     tags: ["工作"],
     folderId: "inbox",
+    isStarred: true,
   },
   {
     id: "n2",
@@ -24,6 +25,7 @@ export const mockNotes: Note[] = [
     updatedAt: "2025-09-28",
     tags: ["生活"],
     folderId: "personal",
+    isStarred: true,
   },
   {
     id: "n4",
@@ -40,6 +42,7 @@ export const mockNotes: Note[] = [
     updatedAt: "2025-09-26",
     tags: ["学习笔记", "技术"],
     folderId: "learning",
+    isStarred: true,
   },
   {
     id: "n6",
@@ -61,6 +64,7 @@ export const mockNotes: Note[] = [
     snippet: "本月支出分析，房租、生活费、娱乐消费明细……",
     updatedAt: "2025-09-23",
     tags: ["财务", "重要"],
+    isStarred: true,
   },
   {
     id: "n9",

@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import ContextMenu from "primevue/contextmenu";
+import Divider from "primevue/divider";
 import type { Note, SelectEvent } from "@/types";
+import type { MenuItem } from "primevue/menuitem";
 
 const props = defineProps<{
   items: Note[];
@@ -8,35 +11,106 @@ const props = defineProps<{
   dense?: boolean;
 }>();
 
-const emit = defineEmits<SelectEvent>();
+const emit = defineEmits<SelectEvent & {
+  (e: "move-to-folder", noteId: string): void;
+  (e: "delete", noteId: string): void;
+  (e: "toggle-star", noteId: string): void;
+}>();
+
+const contextMenuRef = ref<InstanceType<typeof ContextMenu>>();
+const selectedNoteId = ref<string>("");
 
 function onSelect(id: string) {
   emit("select", id);
 }
+
+function onContextMenu(event: MouseEvent, noteId: string) {
+  event.preventDefault();
+  selectedNoteId.value = noteId;
+  
+  if (contextMenuRef.value) {
+    contextMenuRef.value.show(event);
+  }
+}
+
+function onMoveToFolder() {
+  if (selectedNoteId.value) {
+    emit("move-to-folder", selectedNoteId.value);
+  }
+}
+
+function onDelete() {
+  if (selectedNoteId.value) {
+    emit("delete", selectedNoteId.value);
+  }
+}
+
+function onToggleStar() {
+  if (selectedNoteId.value) {
+    emit("toggle-star", selectedNoteId.value);
+  }
+}
+
+const contextMenuItems = computed<MenuItem[]>(() => {
+  const selectedNote = props.items.find(n => n.id === selectedNoteId.value);
+  const isStarred = selectedNote?.isStarred || false;
+  
+  return [
+    {
+      label: "移动到文件夹",
+      icon: "pi pi-folder",
+      command: onMoveToFolder
+    },
+    {
+      label: isStarred ? "取消收藏" : "收藏",
+      icon: isStarred ? "pi pi-star-fill" : "pi pi-star",
+      command: onToggleStar
+    },
+    {
+      separator: true
+    },
+    {
+      label: "删除",
+      icon: "pi pi-trash",
+      command: onDelete
+    }
+  ];
+});
 
 const isDense = computed(() => !!props.dense);
 </script>
 
 <template>
   <div class="note-list" :class="{ dense: isDense }">
-    <div
-      v-for="note in items"
-      :key="note.id"
-      class="note-item"
-      :class="{ active: note.id === activeId }"
-      @click="onSelect(note.id)"
-    >
-      <div class="title-row">
-        <span class="title" :title="note.title">{{ note.title }}</span>
-        <span v-if="note.updatedAt" class="date">{{ note.updatedAt }}</span>
+    <template v-for="(note, index) in items" :key="note.id">
+      <div
+        class="note-item"
+        :class="{ active: note.id === activeId }"
+        @click="onSelect(note.id)"
+        @contextmenu="onContextMenu($event, note.id)"
+      >
+        <div class="title-row">
+          <span class="title" :title="note.title">{{ note.title }}</span>
+          <div class="title-actions">
+            <i v-if="note.isStarred" class="pi pi-star-fill starred-icon" title="已收藏"></i>
+            <span v-if="note.updatedAt" class="date">{{ note.updatedAt }}</span>
+          </div>
+        </div>
+        <div v-if="note.snippet" class="snippet" :title="note.snippet">
+          {{ note.snippet }}
+        </div>
+        <div v-if="note.tags?.length" class="meta">
+          <span class="tag" v-for="t in note.tags" :key="t">#{{ t }}</span>
+        </div>
       </div>
-      <div v-if="note.snippet" class="snippet" :title="note.snippet">
-        {{ note.snippet }}
-      </div>
-      <div v-if="note.tags?.length" class="meta">
-        <span class="tag" v-for="t in note.tags" :key="t">#{{ t }}</span>
-      </div>
-    </div>
+      <Divider v-if="index < items.length - 1" />
+    </template>
+    
+    <!-- 右键菜单 -->
+    <ContextMenu 
+      ref="contextMenuRef" 
+      :model="contextMenuItems" 
+    />
   </div>
 </template>
 
@@ -44,14 +118,16 @@ const isDense = computed(() => !!props.dense);
 .note-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  /* gap: var(--spacing-xs); */
   height: 100%;
   overflow-y: auto;
+  padding-right: var(--spacing-sm);
+  padding-left: var(--spacing-sm);
 }
 
 .note-item {
   padding: var(--spacing-md);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md); 
   cursor: pointer;
   transition: all var(--transition-fast);
   border: 1px solid transparent;
@@ -66,8 +142,8 @@ const isDense = computed(() => !!props.dense);
 }
 
 .note-item.active {
-  background-color: var(--bg-active);
-  border-color: var(--color-primary);
+  background-color: #e0e0e0;
+  /* border-color: var(--color-primary); */
 }
 
 .title-row {
@@ -75,6 +151,13 @@ const isDense = computed(() => !!props.dense);
   align-items: center;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.title-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
   flex-shrink: 0;
 }
 
@@ -91,6 +174,12 @@ const isDense = computed(() => !!props.dense);
 .date {
   font-size: var(--font-size-xs);
   color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.starred-icon {
+  color: #fbbf24;
+  font-size: var(--font-size-sm);
   flex-shrink: 0;
 }
 

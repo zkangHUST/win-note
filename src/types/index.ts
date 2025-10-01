@@ -15,6 +15,7 @@ export interface Note {
   content?: string;
   folderId?: string;
   icon?: string;
+  isStarred?: boolean;
 }
 
 // 文件夹相关类型
@@ -22,6 +23,7 @@ export interface FolderNode extends BaseEntity {
   children?: FolderNode[];
   parentId?: string;
   isExpanded?: boolean;
+  isSystem?: boolean;
 }
 
 // 标签相关类型

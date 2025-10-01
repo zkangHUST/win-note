@@ -18,12 +18,19 @@ export function useNotes(activeFolderId?: Ref<string>) {
 
   const filteredNotes = computed(() => {
     console.log("🔄 重新计算笔记列表, 当前文件夹ID:", activeFolderId?.value);
-    console.log("📝 所有笔记:", notes.value.map(n => ({ id: n.id, title: n.title, folderId: n.folderId })));
+    console.log("📝 所有笔记:", notes.value.map(n => ({ id: n.id, title: n.title, folderId: n.folderId, isStarred: n.isStarred })));
     
     if (!activeFolderId?.value || activeFolderId.value === 'all') {
       // 在"全部"文件夹中，排除回收站中的笔记
       const result = notes.value.filter(note => note.folderId !== 'trash');
       console.log("📁 全部文件夹 - 过滤后笔记:", result.map(n => ({ id: n.id, title: n.title, folderId: n.folderId })));
+      return result;
+    }
+    
+    if (activeFolderId.value === 'favorites') {
+      // 在"收藏"文件夹中，显示所有收藏的笔记
+      const result = notes.value.filter(note => note.isStarred === true);
+      console.log("⭐ 收藏文件夹 - 过滤后笔记:", result.map(n => ({ id: n.id, title: n.title, folderId: n.folderId, isStarred: n.isStarred })));
       return result;
     }
     
@@ -299,6 +306,27 @@ export function useNotes(activeFolderId?: Ref<string>) {
     return null;
   }
 
+  async function toggleStar(noteId: string) {
+    const note = notes.value.find(n => n.id === noteId);
+    if (note) {
+      const updatedMetadata = {
+        ...note,
+        isStarred: !note.isStarred,
+        updatedAt: new Date().toISOString().split('T')[0],
+      };
+      
+      // 更新本地数据
+      Object.assign(note, updatedMetadata);
+      
+      // 保存到存储
+      await noteStorage.saveNoteMetadata(updatedMetadata);
+      
+      console.log("⭐ 切换收藏状态:", note.title, "->", updatedMetadata.isStarred ? "已收藏" : "未收藏");
+      return note;
+    }
+    return null;
+  }
+
 
   return {
     notes: filteredNotes,
@@ -310,6 +338,7 @@ export function useNotes(activeFolderId?: Ref<string>) {
     createNote,
     deleteNote,
     moveNoteToFolder,
+    toggleStar,
     initializeNotes,
     saveNotes,
   };
