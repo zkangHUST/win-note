@@ -1,7 +1,8 @@
 <script setup lang="ts">
-// import { ref } from "vue";
+import { ref } from "vue";
 import FolderList from "./FolderList.vue";
 import TagList from "./TagList.vue";
+import NewFolderDialog from "./NewFolderDialog.vue";
 import { useFolders } from "@/composables/useFolders";
 import { useTags } from "@/composables/useTags";
 
@@ -16,12 +17,24 @@ const emit = defineEmits<{
 const { folders, activeFolderId, selectFolder } = useFolders();
 const { tags, activeTagId, selectTag } = useTags();
 
+const showNewFolderDialog = ref(false);
+
 function onSelectFolder(id: string) {
   selectFolder(id);
 }
 
 function onSelectTag(id: string) {
   selectTag(id);
+}
+
+function createNewFolder() {
+  showNewFolderDialog.value = true;
+}
+
+function handleCreateFolder(data: { name: string; icon: string }) {
+  console.log("创建文件夹:", data);
+  // TODO: 实现实际的创建文件夹逻辑
+  showNewFolderDialog.value = false;
 }
 </script>
 
@@ -42,7 +55,19 @@ function onSelectTag(id: string) {
         <div class="tags">
             <TagList :items="tags" :active-id="activeTagId" @select="onSelectTag" />
         </div>
+        
+        <div class="new-folder">
+            <button class="new-folder-btn" @click="createNewFolder">
+                <i class="pi pi-plus"></i>
+                New Folder
+            </button>
+        </div>
     </div>
+    
+    <NewFolderDialog
+        v-model:visible="showNewFolderDialog"
+        @create="handleCreateFolder"
+    />
 </template>
 
 <style scoped>
@@ -86,5 +111,35 @@ function onSelectTag(id: string) {
     flex: 1;
     padding: 16px 20px;
     overflow-y: auto;
+}
+
+.new-folder {
+    padding: 12px 20px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.new-folder-btn {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.new-folder-btn:hover {
+    background-color: #2563eb;
+}
+
+.new-folder-btn:active {
+    background-color: #1d4ed8;
 }
 </style>
