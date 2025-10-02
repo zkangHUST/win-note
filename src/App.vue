@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from "vue";
 import AppSidebar from "./components/Sidebar.vue";
 import NoteList from "./components/NoteList.vue";
+import NoteGrid from "./components/NoteGrid.vue";
 import ErrorBoundary from "./components/ErrorBoundary.vue";
 import MoveToFolderDialog from "./components/MoveToFolderDialog.vue";
 import NoteHeader from "./components/NoteHeader.vue";
@@ -13,6 +14,7 @@ import { useFolders } from "@/composables/useFolders";
 import { initializeStorage } from "@/storage";
 
 const sidebarVisible = ref(true);
+const viewMode = ref<"list" | "grid">("list");
 const { folders, activeFolderId, selectFolder, initializeFolders, createFolder, editFolder, deleteFolder } = useFolders();
 const { notes, activeNoteId, editorContent, selectNote, createNote, moveNoteToFolder, toggleStar, initializeNotes, updateNoteContent } = useNotes(activeFolderId);
 
@@ -150,6 +152,11 @@ function onDeleteFolder(id: string) {
   }
 }
 
+function onViewChange(mode: "list" | "grid") {
+  console.log("App: 切换视图模式:", mode);
+  viewMode.value = mode;
+}
+
 // 创建新笔记
 async function onCreateNote() {
   try {
@@ -209,31 +216,55 @@ onMounted(async () => {
         />
         <div class="content">
           <div class="note-area">
-            <Splitter style="width: 100%; height: 100%" :gutterSize="8">
-              <SplitterPanel :size="30" :minSize="15">
-                <div class="notes-panel">
-                  <NoteHeader 
-                    :active-note-id="activeNoteId"
-                    @delete="() => onDeleteNote(activeNoteId)"
-                    @create="onCreateNote"
-                  />
-                  <NoteList 
-                    :items="notes" 
-                    :active-id="activeNoteId" 
-                    dense 
-                    @select="onSelectNote"
-                    @move-to-folder="onMoveToFolder"
-                    @delete="onDeleteNote"
-                    @toggle-star="onToggleStar"
-                  />
-                </div>
-              </SplitterPanel>
-              <SplitterPanel :size="70" :minSize="30">
-                <div class="editor-container">
-                  <Editor v-model="editorContent" editorStyle="height: 600px" />
-                </div>
-              </SplitterPanel>
-            </Splitter>
+            <template v-if="viewMode === 'list'">
+              <Splitter style="width: 100%; height: 100%" :gutterSize="8">
+                <SplitterPanel :size="30" :minSize="15">
+                  <div class="notes-panel">
+                    <NoteHeader 
+                      :active-note-id="activeNoteId"
+                      :view-mode="viewMode"
+                      @delete="() => onDeleteNote(activeNoteId)"
+                      @create="onCreateNote"
+                      @view-change="onViewChange"
+                    />
+                    <NoteList 
+                      :items="notes" 
+                      :active-id="activeNoteId" 
+                      dense 
+                      @select="onSelectNote"
+                      @move-to-folder="onMoveToFolder"
+                      @delete="onDeleteNote"
+                      @toggle-star="onToggleStar"
+                    />
+                  </div>
+                </SplitterPanel>
+                <SplitterPanel :size="70" :minSize="30">
+                  <div class="editor-container">
+                    <Editor v-model="editorContent" editorStyle="height: 600px" />
+                  </div>
+                </SplitterPanel>
+              </Splitter>
+            </template>
+            
+            <template v-else>
+              <div class="grid-view">
+                <NoteHeader 
+                  :active-note-id="activeNoteId"
+                  :view-mode="viewMode"
+                  @delete="() => onDeleteNote(activeNoteId)"
+                  @create="onCreateNote"
+                  @view-change="onViewChange"
+                />
+                <NoteGrid 
+                  :items="notes" 
+                  :active-id="activeNoteId"
+                  @select="onSelectNote"
+                  @move-to-folder="onMoveToFolder"
+                  @delete="onDeleteNote"
+                  @toggle-star="onToggleStar"
+                />
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -279,14 +310,25 @@ onMounted(async () => {
   height: 100%;
 }
 
+.grid-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
 .notes-panel {
   height: 100%;
   display: flex;
   flex-direction: column;
   background-color: var(--surface-card);
-  border-radius: var(--border-radius);
+  /* border-radius: var(--border-radius); */
   /* padding-right: var(--spacing-sm); */
   overflow: hidden;
+}
+
+.p-splitter {
+  border: none;
 }
 
 </style>

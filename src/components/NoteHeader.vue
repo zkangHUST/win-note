@@ -2,10 +2,10 @@
   <Toolbar>
     <template #start>
       <div class="view-toggle">
-        <div class="toggle-slider" :class="{ 'slide-right': viewMode === 'grid' }"></div>
+        <div class="toggle-slider" :class="{ 'slide-right': props.viewMode === 'grid' }"></div>
         <button 
           class="view-btn" 
-          :class="{ active: viewMode === 'list' }" 
+          :class="{ active: props.viewMode === 'list' }" 
           @click="onViewChange('list')"
           title="列表视图"
         >
@@ -13,7 +13,7 @@
         </button>
         <button 
           class="view-btn" 
-          :class="{ active: viewMode === 'grid' }" 
+          :class="{ active: props.viewMode === 'grid' }" 
           @click="onViewChange('grid')"
           title="网格视图"
         >
@@ -36,20 +36,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
 import Toolbar from "primevue/toolbar";
 
-defineProps<{
+const props = withDefaults(defineProps<{
   activeNoteId?: string;
-}>();
+  viewMode?: "list" | "grid";
+}>(), {
+  viewMode: "list"
+});
 
 const emit = defineEmits<{
   (e: "delete"): void;
   (e: "create"): void;
   (e: "view-change", mode: "list" | "grid"): void;
 }>();
-
-const viewMode = ref<"list" | "grid">("list");
 
 function onDelete() {
   emit("delete");
@@ -60,7 +60,7 @@ function onCreate() {
 }
 
 function onViewChange(mode: "list" | "grid") {
-  viewMode.value = mode;
+  console.log("NoteHeader: 切换视图模式:", mode, "当前模式:", props.viewMode);
   emit("view-change", mode);
 }
 </script>
@@ -86,11 +86,11 @@ function onViewChange(mode: "list" | "grid") {
   background-color: var(--bg-active);
   border-radius: calc(var(--radius-md) - 2px);
   transition: transform 0.3s ease;
-  z-index: 0;
+  z-index: 1;
 }
 
 .toggle-slider.slide-right {
-  transform: translateX(28px);
+  transform: translateX(calc(26px + 2px));
 }
 
 .view-btn {
@@ -106,15 +106,11 @@ function onViewChange(mode: "list" | "grid") {
   color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.2s ease;
-  z-index: 1;
+  z-index: 2;
 }
 
 .view-btn:hover {
   color: var(--text-primary);
-}
-
-.view-btn.active {
-  color: var(--color-primary);
 }
 
 .view-btn .pi {
