@@ -4,6 +4,7 @@ import AppSidebar from "./components/Sidebar.vue";
 import NoteList from "./components/NoteList.vue";
 import ErrorBoundary from "./components/ErrorBoundary.vue";
 import MoveToFolderDialog from "./components/MoveToFolderDialog.vue";
+import NoteHeader from "./components/NoteHeader.vue";
 import Editor from "primevue/editor";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
@@ -211,21 +212,11 @@ onMounted(async () => {
             <Splitter style="width: 100%; height: 100%" :gutterSize="8">
               <SplitterPanel :size="30" :minSize="15">
                 <div class="notes-panel">
-                  <div class="notes-header">
-                    <h3 class="notes-title">笔记</h3>
-                    <div class="notes-actions">
-                      <button @click="() => onDeleteNote(activeNoteId)" class="delete-note-btn" title="删除笔记" :disabled="!activeNoteId">
-                        <i class="pi pi-trash"></i>
-                      </button>
-                      <!-- 调试信息 -->
-                      <div style="font-size: 10px; color: #666; margin-left: 8px;">
-                        ID: {{ activeNoteId || 'none' }}
-                      </div>
-                      <button @click="onCreateNote" class="new-note-btn" title="新建笔记">
-                        <i class="pi pi-pen-to-square"></i>
-                      </button>
-                    </div>
-                  </div>
+                  <NoteHeader 
+                    :active-note-id="activeNoteId"
+                    @delete="() => onDeleteNote(activeNoteId)"
+                    @create="onCreateNote"
+                  />
                   <NoteList 
                     :items="notes" 
                     :active-id="activeNoteId" 
@@ -298,96 +289,6 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.notes-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background-color: var(--surface-hover);
-  border-bottom: 1px solid var(--surface-border);
-  flex-shrink: 0;
-}
-
-.notes-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.notes-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.new-note-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 50%;
-  background-color: #f8fafc;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 12px;
-  border: 1px solid #e2e8f0;
-}
-
-.new-note-btn:hover {
-  background-color: #e2e8f0;
-  color: #475569;
-  transform: scale(1.05);
-}
-
-.new-note-btn:active {
-  transform: scale(0.95);
-}
-
-.delete-note-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 50%;
-  background-color: #fef2f2;
-  color: #dc2626;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 12px;
-  border: 1px solid #fecaca;
-}
-
-.delete-note-btn:hover:not(:disabled) {
-  background-color: #fecaca;
-  color: #b91c1c;
-  transform: scale(1.05);
-}
-
-.delete-note-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.delete-note-btn:disabled {
-  background-color: #f8fafc;
-  color: #cbd5e1;
-  border-color: #e2e8f0;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.delete-note-btn .pi {
-  font-size: 14px;
-}
-
-.new-note-btn .pi {
-  font-size: 14px;
-}
 </style>
 
 <style>
